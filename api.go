@@ -3,16 +3,21 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
-// Api ...
-type Api struct {
+// API ...
+type API interface {
+}
+
+// api ...
+type api struct {
 	url    string
 	client *http.Client
 }
 
 // New ...
-func New(url string) *Api {
+func New(url string) API {
 	c := &http.Client{
 		Transport: &http.Transport{
 			Proxy:             http.ProxyFromEnvironment,
@@ -24,8 +29,8 @@ func New(url string) *Api {
 }
 
 // NewWithClient ...
-func NewWithClient(url string, c *http.Client) *Api {
-	var api Api
+func NewWithClient(url string, c *http.Client) API {
+	var api api
 	api.url = url
 	api.client = c
 	// We don't support redirects.
@@ -36,20 +41,35 @@ func NewWithClient(url string, c *http.Client) *Api {
 }
 
 // GET ...
-func (*Api) GET() {
+func (*api) GET() {
 
 }
 
 // POST ...
-func (*Api) POST() {
+func (*api) POST() {
 
 }
 
 // Request ...
-func (*Api) Request() {
-	buildRequester()
+func (a *api) Request(command string, args ...string) (*Responder, error) {
+	return buildRequester(a.url, command, args...).Do(a.client)
 }
 
-func buildRequester() {
+func buildRequester(url, command string, args ...string) *Requester {
+	if !strings.HasPrefix(url, "http") {
+		url = "http://" + url
+	}
 
+	opts := map[string]string{
+		"encoding":        "json",
+		"stream-channels": "true",
+	}
+
+	return &Requester{
+		ApiBase: url + "/api/v0",
+		Command: command,
+		Args:    args,
+		Opts:    opts,
+		Headers: make(map[string]string),
+	}
 }
