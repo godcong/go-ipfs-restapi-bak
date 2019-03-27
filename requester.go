@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -126,4 +127,25 @@ func (r *Requester) URL() string {
 	}
 
 	return fmt.Sprintf("%s/%s?%s", r.ApiBase, r.Command, values.Encode())
+}
+
+// Option ...
+func (r *Requester) Option(key string, value interface{}) *Requester {
+	var s string
+	switch v := value.(type) {
+	case bool:
+		s = strconv.FormatBool(v)
+	case string:
+		s = v
+	case []byte:
+		s = string(v)
+	default:
+		// slow case.
+		s = fmt.Sprint(value)
+	}
+	if r.Opts == nil {
+		r.Opts = make(map[string]string, 1)
+	}
+	r.Opts[key] = s
+	return r
 }
