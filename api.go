@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -12,8 +13,11 @@ type API interface {
 
 // api ...
 type api struct {
-	url    string
-	client *http.Client
+	url     string
+	client  *http.Client
+	opts    map[string]string
+	headers map[string]string
+	body    io.Reader
 }
 
 // New ...
@@ -52,7 +56,11 @@ func (*api) POST() {
 
 // Request ...
 func (a *api) Request(command string, args ...string) (*Responder, error) {
-	return buildRequester(a.url, command, args...).Do(a.client)
+	requester := buildRequester(a.url, command, args...)
+	requester.Opts = a.opts
+	requester.Body = a.body
+	requester.Headers = a.headers
+	return requester.Do(a.client)
 }
 
 func buildRequester(url, command string, args ...string) *Requester {

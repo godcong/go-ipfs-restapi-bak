@@ -24,7 +24,6 @@ type Requester struct {
 
 // Result ...
 type Responder struct {
-	Decoder map[string]interface{}
 	Command string
 	Message string
 	Code    int
