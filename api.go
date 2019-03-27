@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -60,7 +61,8 @@ func (a *api) Request(command string, args ...string) (*Responder, error) {
 	requester.Opts = a.opts
 	requester.Body = a.body
 	requester.Headers = a.headers
-	return requester.Do(a.client)
+	requester.Client = a.client
+	return requester.Do(context.Background())
 }
 
 func buildRequester(url, command string, args ...string) *Requester {

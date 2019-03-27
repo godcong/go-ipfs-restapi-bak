@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/ipfs/go-ipfs-files"
@@ -20,17 +21,36 @@ type Requester struct {
 	Opts    map[string]string
 	Body    io.Reader
 	Headers map[string]string
+	Client  *http.Client
 }
 
 // Result ...
-type Responder struct {
+type Result struct {
 	Command string
 	Message string
 	Code    int
 }
 
+// Exec ...
+func (r *Requester) Exec(ctx context.Context, res interface{}) error {
+	httpRes, err := r.Do(ctx)
+	if err != nil {
+		return err
+	}
+
+	if res == nil {
+		lateErr := httpRes.Close()
+		if httpRes.Error != nil {
+			return httpRes.Error
+		}
+		return lateErr
+	}
+
+	return httpRes.Decode(res)
+}
+
 // Do ...
-func (r *Requester) Do(client *http.Client) (responder *Responder, e error) {
+func (r *Requester) Do(ctx context.Context) (responder *Responder, e error) {
 	req, e := http.NewRequest("POST", r.URL(), r.Body)
 	if e != nil {
 		return nil, e
@@ -46,7 +66,7 @@ func (r *Requester) Do(client *http.Client) (responder *Responder, e error) {
 		req.Header.Set("Content-Disposition", "form-data; name=\"files\"")
 	}
 
-	resp, e := client.Do(req)
+	resp, e := client.Do(req.WithContext(ctx))
 	if e != nil {
 		return nil, e
 	}
@@ -54,48 +74,32 @@ func (r *Requester) Do(client *http.Client) (responder *Responder, e error) {
 	contentType := resp.Header.Get("Content-Type")
 	parts := strings.Split(contentType, ";")
 	contentType = parts[0]
-	responder = &Responder{}
+	result := make(map[string]string)
 	if resp.StatusCode >= http.StatusBadRequest {
-		responder.Command = r.Command
+		result["Command"] = r.Command
 		switch {
 		case resp.StatusCode == http.StatusNotFound:
-			responder.Message = "command not found"
+			result["Message"] = "command not found"
 		case contentType == "text/plain":
 			out, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "ipfs-shell: warning! response (%d) read error: %s\n", resp.StatusCode, err)
 			}
-			responder.Message = string(out)
+			result["Message"] = string(out)
 		case contentType == "application/json":
-			//if e = json.NewDecoder(resp.Body).Decode(e); e != nil {
-			//	_, _ = fmt.Fprintf(os.Stderr, "ipfs-shell: warning! response (%d) unmarshall error: %s\n", resp.StatusCode, e)
-			//}
-			//body, err := ioutil.ReadAll(resp.Body)
-			dec := json.NewDecoder(resp.Body)
-			//var fileInfo []map[string]string
-			//out := map[string]string{}
-			for {
-				e = dec.Decode(&responder)
-				if e != nil {
-					if e == io.EOF {
-						break
-					}
-					return nil, e
-				}
-				//m = out
-				//fileInfo = append(fileInfo, out)
+			if e = json.NewDecoder(resp.Body).Decode(result); e != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "ipfs-shell: warning! response (%d) unmarshall error: %s\n", resp.StatusCode, e)
 			}
-
 		default:
 			_, _ = fmt.Fprintf(os.Stderr, "ipfs-shell: warning! unhandled response (%d) encoding: %s", resp.StatusCode, contentType)
 			out, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "ipfs-shell: response (%d) read error: %s\n", resp.StatusCode, err)
 			}
-			responder.Message = fmt.Sprintf("unknown ipfs-shell error encoding: %q - %q", contentType, out)
+			result["Message"] = fmt.Sprintf("unknown ipfs-shell error encoding: %q - %q", contentType, out)
 		}
-		//responder.Error = e
-		//responder.Output = nil
+		result["Error"] = e
+		nresp.Output = nil
 
 		// drain body and close
 		io.Copy(ioutil.Discard, resp.Body)
