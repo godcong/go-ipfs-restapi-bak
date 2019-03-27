@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ipfs/go-ipfs-files"
+	"golang.org/x/xerrors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -66,7 +67,7 @@ func (r *Requester) Do(ctx context.Context) (responder *Responder, e error) {
 		req.Header.Set("Content-Disposition", "form-data; name=\"files\"")
 	}
 
-	resp, e := client.Do(req.WithContext(ctx))
+	resp, e := r.Client.Do(req.WithContext(ctx))
 	if e != nil {
 		return nil, e
 	}
@@ -74,6 +75,12 @@ func (r *Requester) Do(ctx context.Context) (responder *Responder, e error) {
 	contentType := resp.Header.Get("Content-Type")
 	parts := strings.Split(contentType, ";")
 	contentType = parts[0]
+
+	responder = &Responder{
+		Output: resp.Body,
+		Error:  nil,
+	}
+
 	result := make(map[string]string)
 	if resp.StatusCode >= http.StatusBadRequest {
 		result["Command"] = r.Command
@@ -98,14 +105,14 @@ func (r *Requester) Do(ctx context.Context) (responder *Responder, e error) {
 			}
 			result["Message"] = fmt.Sprintf("unknown ipfs-shell error encoding: %q - %q", contentType, out)
 		}
-		result["Error"] = e
-		nresp.Output = nil
+		responder.Error = xerrors.New(result["Message"])
+		responder.Output = nil
 
 		// drain body and close
-		io.Copy(ioutil.Discard, resp.Body)
-		resp.Body.Close()
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
+		_ = resp.Body.Close()
 	}
-	return &Responder{}, nil
+	return responder, nil
 }
 
 // URL ...
