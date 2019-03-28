@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/xerrors"
 	"io"
 	"net/http"
 	"strings"
@@ -69,6 +70,19 @@ func buildRequester(url, command string, args ...string) *Requester {
 		Opts:    opts,
 		Headers: make(map[string]string),
 	}
+}
+
+// AddDirList ...
+func (a *API) AddDirList(path string) (*ListObject, error) {
+	rets, e := a.AddDir(path)
+	if e != nil {
+		return &ListObject{}, e
+	}
+	size := len(rets)
+	if size == 0 {
+		return &ListObject{}, xerrors.New("add not result")
+	}
+	return a.List("/ipfs/" + rets[len(rets)-1].Hash)
 }
 
 // List entries at the given path
