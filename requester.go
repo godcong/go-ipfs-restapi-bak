@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ipfs/go-ipfs-files"
+	"github.com/godcong/go-ipfs-files"
 	"golang.org/x/xerrors"
 	"io"
 	"io/ioutil"
