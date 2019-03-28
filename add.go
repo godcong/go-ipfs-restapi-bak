@@ -54,7 +54,7 @@ func RawLeaves(enabled bool) AddOpts {
 }
 
 // AddFile ...
-func (a *API) AddFile(pathname string) (map[string]string, error) {
+func (a *API) AddFile(pathname string) (*AddRet, error) {
 	stat, err := os.Lstat(pathname)
 	if err != nil {
 		return nil, err
@@ -69,16 +69,16 @@ func (a *API) AddFile(pathname string) (map[string]string, error) {
 	slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry(path.Base(file), sf)})
 	fileReader := files.NewMultiFileReader(slf, true)
 
-	var out map[string]string
+	var out AddRet
 	req := a.Request("add")
 	req.Body = fileReader
 
 	e := req.Exec(context.Background(), &out)
-	return out, e
+	return &out, e
 }
 
 //Add ...
-func (a *API) Add(r io.Reader, options ...AddOpts) (AddRet, error) {
+func (a *API) Add(r io.Reader, options ...AddOpts) (*AddRet, error) {
 	fr := files.NewReaderFile(r)
 	slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry("", fr)})
 	fileReader := files.NewMultiFileReader(slf, true)
@@ -91,11 +91,11 @@ func (a *API) Add(r io.Reader, options ...AddOpts) (AddRet, error) {
 	}
 	req.Body = fileReader
 	e := req.Exec(context.Background(), &out)
-	return out, e
+	return &out, e
 }
 
 // AddLink ...
-func (a *API) AddLink(target string) (AddRet, error) {
+func (a *API) AddLink(target string) (*AddRet, error) {
 	link := files.NewLinkFile(target, nil)
 	slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry("", link)})
 	fileReader := files.NewMultiFileReader(slf, true)
@@ -105,7 +105,7 @@ func (a *API) AddLink(target string) (AddRet, error) {
 	req.Body = fileReader
 
 	e := req.Exec(context.Background(), &out)
-	return out, e
+	return &out, e
 }
 
 // AddDir adds a directory recursively with all of the files under it
