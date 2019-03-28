@@ -42,7 +42,7 @@ func RawLeaves(enabled bool) AddOpts {
 }
 
 //Add ...
-func (a *api) Add(r io.Reader, options ...AddOpts) (map[string]string, error) {
+func (a *API) Add(r io.Reader, options ...AddOpts) (map[string]string, error) {
 	fr := files.NewReaderFile(r)
 	slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry("", fr)})
 	fileReader := files.NewMultiFileReader(slf, true)
@@ -54,6 +54,20 @@ func (a *api) Add(r io.Reader, options ...AddOpts) (map[string]string, error) {
 		_ = option(req)
 	}
 	req.Body = fileReader
+	e := req.Exec(context.Background(), &out)
+	return out, e
+}
+
+// Add ...
+func (a *API) AddLink(target string) (map[string]string, error) {
+	link := files.NewLinkFile(target, nil)
+	slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry("", link)})
+	fileReader := files.NewMultiFileReader(slf, true)
+
+	var out map[string]string
+	req := a.Request("add")
+	req.Body = fileReader
+
 	e := req.Exec(context.Background(), &out)
 	return out, e
 }

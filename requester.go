@@ -35,7 +35,7 @@ type Result struct {
 
 // Exec ...
 func (r *Requester) Exec(ctx context.Context, res interface{}) error {
-	httpRes, err := r.Do(ctx)
+	httpRes, err := r.POST(ctx)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (r *Requester) Exec(ctx context.Context, res interface{}) error {
 
 // GET ...
 func (r *Requester) GET() (responder *Responder, e error) {
-
+	return nil, nil
 }
 
 // Do ...

@@ -7,13 +7,8 @@ import (
 	"strings"
 )
 
-// API ...
-type API interface {
-	Request(command string, args ...string) *Requester
-}
-
 // api ...
-type api struct {
+type API struct {
 	url     string
 	client  *http.Client
 	opts    map[string]string
@@ -22,7 +17,7 @@ type api struct {
 }
 
 // New ...
-func New(url string) API {
+func New(url string) *API {
 	c := &http.Client{
 		Transport: &http.Transport{
 			Proxy:             http.ProxyFromEnvironment,
@@ -34,8 +29,8 @@ func New(url string) API {
 }
 
 // NewWithClient ...
-func NewWithClient(url string, c *http.Client) API {
-	var api api
+func NewWithClient(url string, c *http.Client) *API {
+	var api API
 	api.url = url
 	api.client = c
 	// We don't support redirects.
@@ -46,7 +41,7 @@ func NewWithClient(url string, c *http.Client) API {
 }
 
 // Request ...
-func (a *api) Request(command string, args ...string) *Requester {
+func (a *API) Request(command string, args ...string) *Requester {
 	requester := buildRequester(a.url, command, args...)
 	requester.Opts = a.opts
 	requester.Body = a.body
