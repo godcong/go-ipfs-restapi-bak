@@ -1,13 +1,15 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 )
 
-// api ...
+// API ...
 type API struct {
 	url     string
 	client  *http.Client
@@ -61,10 +63,51 @@ func buildRequester(url, command string, args ...string) *Requester {
 	}
 
 	return &Requester{
-		ApiBase: url + "/api/v0",
+		APIBase: url + "/api/v0",
 		Command: command,
 		Args:    args,
 		Opts:    opts,
 		Headers: make(map[string]string),
 	}
+}
+
+// List entries at the given path
+func (a *API) List(path string) ([]*LsLink, error) {
+	var out struct{ Objects []LsObject }
+	err := a.Request("ls", path).Exec(context.Background(), &out)
+	if err != nil {
+		return nil, err
+	}
+	if len(out.Objects) != 1 {
+		return nil, errors.New("bad response from server")
+	}
+	return out.Objects[0].Links, nil
+}
+
+// LsLink ...
+type LsLink struct {
+	Hash string
+	Name string
+	Size uint64
+	Type int
+}
+
+// LsObject ...
+type LsObject struct {
+	Links []*LsLink
+	LsLink
+}
+
+// Pin the given path
+func (a *API) Pin(path string) error {
+	return a.Request("pin/add", path).
+		Option("recursive", true).
+		Exec(context.Background(), nil)
+}
+
+// Unpin the given path
+func (a *API) Unpin(path string) error {
+	return a.Request("pin/rm", path).
+		Option("recursive", true).
+		Exec(context.Background(), nil)
 }

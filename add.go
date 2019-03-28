@@ -94,7 +94,7 @@ func (a *API) Add(r io.Reader, options ...AddOpts) (AddRet, error) {
 	return out, e
 }
 
-// Add ...
+// AddLink ...
 func (a *API) AddLink(target string) (AddRet, error) {
 	link := files.NewLinkFile(target, nil)
 	slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry("", link)})

@@ -17,7 +17,7 @@ import (
 
 // Requester ...
 type Requester struct {
-	ApiBase string
+	APIBase string
 	Command string
 	Args    []string
 	Opts    map[string]string
@@ -56,7 +56,7 @@ func (r *Requester) GET() (responder *Responder, e error) {
 	return nil, nil
 }
 
-// Do ...
+// POST ...
 func (r *Requester) POST(ctx context.Context) (responder *Responder, e error) {
 	req, e := http.NewRequest("POST", r.URL(), r.Body)
 	if e != nil {
@@ -131,7 +131,7 @@ func (r *Requester) URL() string {
 		values.Add(k, v)
 	}
 
-	return fmt.Sprintf("%s/%s?%s", r.ApiBase, r.Command, values.Encode())
+	return fmt.Sprintf("%s/%s?%s", r.APIBase, r.Command, values.Encode())
 }
 
 // Option ...
