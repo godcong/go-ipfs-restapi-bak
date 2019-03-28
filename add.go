@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"github.com/ipfs/go-ipfs-files"
 	"io"
 )
 
@@ -41,16 +43,17 @@ func RawLeaves(enabled bool) AddOpts {
 
 //Add ...
 func (a *api) Add(r io.Reader, options ...AddOpts) (map[string]string, error) {
-	//fr := files.NewReaderFile(r)
-	//slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry("", fr)})
-	//fileReader := files.NewMultiFileReader(slf, true)
-	//
-	//var out map[string]string
-	//rb :=
-	//for _, option := range options {
-	//	_ = option(rb)
-	//}
-	//a.Request("add")
-	//return out, rb.Body(fileReader).Exec(context.Background(), &out)
-	return nil, nil
+	fr := files.NewReaderFile(r)
+	slf := files.NewSliceDirectory([]files.DirEntry{files.FileEntry("", fr)})
+	fileReader := files.NewMultiFileReader(slf, true)
+
+	var out map[string]string
+	req := a.Request("add")
+
+	for _, option := range options {
+		_ = option(req)
+	}
+	req.Body = fileReader
+	e := req.Exec(context.Background(), &out)
+	return out, e
 }

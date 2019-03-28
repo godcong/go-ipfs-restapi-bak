@@ -51,8 +51,13 @@ func (r *Requester) Exec(ctx context.Context, res interface{}) error {
 	return httpRes.Decode(res)
 }
 
+// GET ...
+func (r *Requester) GET() (responder *Responder, e error) {
+
+}
+
 // Do ...
-func (r *Requester) Do(ctx context.Context) (responder *Responder, e error) {
+func (r *Requester) POST(ctx context.Context) (responder *Responder, e error) {
 	req, e := http.NewRequest("POST", r.URL(), r.Body)
 	if e != nil {
 		return nil, e
