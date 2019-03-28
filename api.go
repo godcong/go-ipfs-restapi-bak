@@ -72,30 +72,32 @@ func buildRequester(url, command string, args ...string) *Requester {
 }
 
 // List entries at the given path
-func (a *API) List(path string) (map[string]interface{}, error) {
-	var out map[string]interface{}
+func (a *API) List(path string) (*ListObject, error) {
+	var out struct {
+		Objects []*ListObject
+	}
 	err := a.Request("ls", path).Exec(context.Background(), &out)
 	if err != nil {
 		return nil, err
 	}
-	if len(out) != 1 {
+	if len(out.Objects) != 1 {
 		return nil, errors.New("bad response from server")
 	}
-	return out, nil
+	return out.Objects[0], nil
 }
 
-// LsLink ...
-type LsLink struct {
+// ListLink ...
+type ListLink struct {
 	Hash string
 	Name string
 	Size uint64
 	Type int
 }
 
-// LsObject ...
-type LsObject struct {
-	Links []*LsLink
-	LsLink
+// ListObject ...
+type ListObject struct {
+	Links []*ListLink
+	ListLink
 }
 
 // Pin the given path
