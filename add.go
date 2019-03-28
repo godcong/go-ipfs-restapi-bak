@@ -9,13 +9,31 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 )
 
 // AddRet ...
 type AddRet struct {
 	Hash string
 	Name string
-	Size string
+	Size uint64
+}
+
+// UnmarshalJSON redraw json unmarshal
+func (r *AddRet) UnmarshalJSON(b []byte) error {
+	out := struct {
+		Hash string
+		Name string
+		Size string
+	}{}
+	e := json.Unmarshal(b, &out)
+	if e != nil {
+		return e
+	}
+	r.Size, _ = strconv.ParseUint(out.Size, 10, 64)
+	r.Hash = out.Hash
+	_, r.Name = path.Split(out.Name)
+	return nil
 }
 
 // AddOpts ...
