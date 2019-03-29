@@ -73,6 +73,7 @@ func buildRequester(url, command string, args ...string) *Requester {
 }
 
 // AddDirList ...
+// Deprecate: do in unmarshal json
 func (a *API) AddDirList(path string) (*ListObject, error) {
 	rets, e := a.AddDir(path)
 	if e != nil {
