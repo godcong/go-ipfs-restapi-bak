@@ -31,6 +31,28 @@ func New(url string) *API {
 	return NewWithClient(url, c)
 }
 
+// OutputID ...
+type OutputID struct {
+	ID              string
+	PublicKey       string
+	Addresses       []string
+	AgentVersion    string
+	ProtocolVersion string
+}
+
+// ID ...
+func (a *API) ID(peer ...string) (*OutputID, error) {
+	if len(peer) > 1 {
+		return nil, fmt.Errorf("Too many peer arguments")
+	}
+
+	var out OutputID
+	if err := a.Request("id", peer...).Exec(context.Background(), &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // NewWithClient ...
 func NewWithClient(url string, c *http.Client) *API {
 	var api API
